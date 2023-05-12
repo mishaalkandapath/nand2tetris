@@ -14,24 +14,39 @@ public class Parser {
   */
 
     private final Scanner vmScannedFile;
-    private String currLine;
+    private String currLine; //the line in the file that is being processed right now
 
-    /*
-    Constructor to accept a file and open it
+    /**
+     * Constructor to accept a file and open it
+     * @param filename name of the file to open
+     * @param extension extension of file to open
+     * @throws FileNotFoundException when the given filename.extension does not exist
      */
     public Parser(String filename, String extension) throws FileNotFoundException {
         File vmFile = new File(filename + extension);
         this.vmScannedFile = new Scanner(vmFile); //using a scanner for efficiency
     }
 
+    /**
+     * check if there are more lines to process in the file
+     * @return whether there are more lines
+     */
     public boolean hasMoreCommands(){
         return vmScannedFile.hasNextLine();
     }
 
+    /**
+     * move on to the next line
+     * call only if there are more lines
+     */
     public void advance(){
         currLine = vmScannedFile.nextLine();
     }
 
+    /**
+     * process the type of command that has been typed out
+     * @return the suitable from the Command enum
+     */
     public Command commandType(){
         return switch (currLine.split(" ")[0]) {
             case "push" -> Command.C_PUSH;
@@ -40,9 +55,17 @@ public class Parser {
         };
     }
 
+    /**
+     * @return the first argument in command. Do not call if line of type C_RETURN
+     */
     public String arg1(){
         return currLine.split(" ")[0];
     }
+
+    /**
+     * Call only for C_POP, C_PUSH, C_FUNCTION, C_CALL
+     * @return appropriate memory segment
+     */
     public int arg2(){
         return switch (currLine.split(" ")[1]){
             case "constant" -> 0;
