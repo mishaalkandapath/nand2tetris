@@ -51,7 +51,8 @@ public class Parser {
         return switch (currLine.split(" ")[0]) {
             case "push" -> Command.C_PUSH;
             case "pop" -> Command.C_POP;
-            default -> Command.C_ARITHMETIC;
+            case "neg", "not" -> Command.C_ARITHMETIC_UN;
+            default -> Command.C_ARITHMETIC_BIN;
         };
     }
 
