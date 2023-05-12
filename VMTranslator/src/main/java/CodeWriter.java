@@ -43,7 +43,7 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
-    public void writeArithmeticBinary(String command, int lineCount) throws IOException{
+    public int writeArithmeticBinary(String command, int lineCount) throws IOException{
         accessLastInStack();
         this.fileWriter.write("D=M"); //store the last element in the stack to the data register
         this.fileWriter.newLine();
@@ -75,13 +75,16 @@ public class CodeWriter {
                 //write the skip part
                 this.fileWriter.write("(skipTrue"+lineCount+")");
                 this.fileWriter.newLine();
+                decrementStack();
+                return 1;
             }
             default -> {
                 this.fileWriter.write(String.format("M=M%sD", this.operatorSymbols.get(command)));
                 this.fileWriter.newLine();
+                decrementStack();
+                return 0;
             }
         }
-        decrementStack();
     }
 
     public void writePushPop(Command command, String segment, int index) throws IOException {
@@ -103,6 +106,10 @@ public class CodeWriter {
             this.fileWriter.newLine();
             decrementStack();
         }
+    }
+
+    public void close() throws IOException {
+        this.fileWriter.close();
     }
 
     //writer helper methods:

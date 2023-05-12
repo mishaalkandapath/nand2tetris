@@ -19,11 +19,10 @@ public class Parser {
     /**
      * Constructor to accept a file and open it
      * @param filename name of the file to open
-     * @param extension extension of file to open
-     * @throws FileNotFoundException when the given filename.extension does not exist
+     * @throws FileNotFoundException when the given filename does not exist
      */
-    public Parser(String filename, String extension) throws FileNotFoundException {
-        File vmFile = new File(filename + extension);
+    public Parser(String filename) throws FileNotFoundException {
+        File vmFile = new File(filename);
         this.vmScannedFile = new Scanner(vmFile); //using a scanner for efficiency
     }
 
@@ -79,5 +78,9 @@ public class Parser {
             case "temp" -> 7;
             default -> -1; //invalid memory segment
         };
+    }
+
+    public void close(){
+        this.vmScannedFile.close();
     }
 }
