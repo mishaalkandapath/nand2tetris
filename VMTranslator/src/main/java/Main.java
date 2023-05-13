@@ -2,6 +2,7 @@ package main.java;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 
 public class Main {
 
@@ -16,7 +17,9 @@ public class Main {
         try {
             int lines = 0;
             Parser parser = new Parser(args[0]);
-            CodeWriter codeWriter = new CodeWriter(args[0].substring(0, args[0].length()));
+            CodeWriter codeWriter = new CodeWriter(args[0],
+                    loadOperationSymbols(),
+                    loadMemSegments());
             while (parser.hasMoreCommands()){
                 parser.advance();
                 Command type = parser.commandType();
@@ -35,5 +38,32 @@ public class Main {
 
 
 
+    }
+
+    private static HashMap<String, Integer> loadMemSegments(){
+        HashMap<String, Integer> memSegments = new HashMap<>();
+        memSegments.put("local", 1);
+        memSegments.put("argument", 2);
+        memSegments.put("this", 3);
+        memSegments.put("that", 4);
+//        memSegments.put("static", 16);
+        memSegments.put("temp", 5);
+        //note static is implemented differently, refer codewriter class for the same
+        //pointer is also implemented differently, refer as above.
+        return memSegments;
+    }
+
+    private static HashMap<String, String> loadOperationSymbols(){
+        HashMap<String, String> opSymbols = new HashMap<>();
+        opSymbols.put("add", "+");
+        opSymbols.put("sub", "-");
+        opSymbols.put("and", "&");
+        opSymbols.put("or", "|");
+        opSymbols.put("neg", "-");
+        opSymbols.put("not", "!");
+        opSymbols.put("eq", "JEQ");
+        opSymbols.put("lt", "JLT");
+        opSymbols.put("gt", "JGT");
+        return opSymbols;
     }
 }

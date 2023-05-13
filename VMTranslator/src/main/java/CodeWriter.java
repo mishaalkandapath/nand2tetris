@@ -53,13 +53,7 @@ public class CodeWriter {
             case "lt", "gt", "eq" ->{
                 this.fileWriter.write(String.format("@%s", "boolean" + lineCount));
                 this.fileWriter.newLine();
-                if (command.equals("lt")){
-                    this.fileWriter.write("M-D;JLT");
-                }else if (command.equals("eq")){
-                    this.fileWriter.write("M-D;JEQ");
-                }else{
-                    this.fileWriter.write("M-D;JGT");
-                }
+                this.fileWriter.write(String.format("M-D;%s", this.operatorSymbols.get(command)));
                 //write the false condition
                 this.fileWriter.write("M=0");
                 this.fileWriter.newLine();
@@ -138,11 +132,11 @@ public class CodeWriter {
         this.fileWriter.write(String.format("@%s", this.memorySegmentIndices.get(segment)));
         this.fileWriter.newLine();
         switch (segment) {
-            case "this", "that" -> {
+            case "this", "that"-> {
                 this.fileWriter.write(String.format("%s=M", isPush ? "D" : "M"));
                 this.fileWriter.newLine();
             }
-            case "static" -> {
+            case "static", "temp" -> {
                 this.fileWriter.write(String.format("@%s", index + this.memorySegmentIndices.get("static")));
                 this.fileWriter.write(String.format("%s=M", isPush ? "D" : "M"));
                 this.fileWriter.newLine();
