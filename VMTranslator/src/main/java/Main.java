@@ -17,7 +17,7 @@ public class Main {
         try {
             int lines = 0;
             Parser parser = new Parser(args[0]);
-            CodeWriter codeWriter = new CodeWriter(args[0],
+            CodeWriter codeWriter = new CodeWriter(args[0].substring(0, args[0].length() - 2),
                     loadOperationSymbols(),
                     loadMemSegments());
             while (parser.hasMoreCommands()){

@@ -20,6 +20,7 @@ public class CodeWriter {
     private final HashMap<String, String> operatorSymbols;
     private final HashMap<String, Integer> memorySegmentIndices;
     private final BufferedWriter fileWriter;
+    private final String filename;
 
     /**
      * create a buffered file writer with the given name to create filename.asm
@@ -30,6 +31,7 @@ public class CodeWriter {
         this.fileWriter= new BufferedWriter(new FileWriter(filename + ".asm"));
         this.operatorSymbols = operatorSymbols;
         this.memorySegmentIndices = memorySegmentIndices;
+        this.filename = filename;
     }
 
     /**
@@ -129,23 +131,37 @@ public class CodeWriter {
     }
 
     private void accessMem(String segment, int index, boolean isPush) throws IOException{
-        this.fileWriter.write(String.format("@%s", this.memorySegmentIndices.get(segment)));
-        this.fileWriter.newLine();
         switch (segment) {
             case "this", "that"-> {
-                this.fileWriter.write(String.format("%s=M", isPush ? "D" : "M"));
+                this.fileWriter.write(String.format("@%s", this.memorySegmentIndices.get(segment)));
                 this.fileWriter.newLine();
             }
-            case "static", "temp" -> {
-                this.fileWriter.write(String.format("@%s", index + this.memorySegmentIndices.get("static")));
-                this.fileWriter.write(String.format("%s=M", isPush ? "D" : "M"));
+            case "temp" -> {
+                this.fileWriter.write(String.format("@%d", index + this.memorySegmentIndices.get(segment)));
                 this.fileWriter.newLine();
+            }
+            case "static" -> {
+                this.fileWriter.write(String.format("@%s.%d", filename, index));
+                this.fileWriter.newLine();
+            }
+            case "pointer" -> {
+                this.fileWriter.write(String.format("@%d", index == 1 ? this.memorySegmentIndices.get("this") : this.memorySegmentIndices.get("that")));
+                this.fileWriter.newLine();
+            }
+            case "constant" -> {
+                this.fileWriter.write(String.format("D=%d", index));
             }
             default -> {
-                this.fileWriter.write(String.format("A=M+%s", index));
+                this.fileWriter.write(String.format("@%s", this.memorySegmentIndices.get(segment)));
                 this.fileWriter.newLine();
-                this.fileWriter.write(String.format("%s=M", isPush ? "D":"M"));
+                this.fileWriter.write(String.format("A=M+%d", index));
+                this.fileWriter.newLine();
             }
+        }
+
+        if (!segment.equals("constant")) { // there is no pop for constant
+            this.fileWriter.write(String.format("%s=M", isPush ? "D":"M"));
+            this.fileWriter.newLine();
         }
     }
 
