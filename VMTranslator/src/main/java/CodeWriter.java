@@ -56,12 +56,13 @@ public class CodeWriter {
                 this.fileWriter.write(String.format("@%s", "boolean" + lineCount));
                 this.fileWriter.newLine();
                 this.fileWriter.write(String.format("M-D;%s", this.operatorSymbols.get(command)));
+                this.fileWriter.newLine();
                 //write the false condition
                 this.fileWriter.write("M=0");
                 this.fileWriter.newLine();
                 this.fileWriter.write("@skipTrue"+lineCount);
                 this.fileWriter.newLine();
-                this.fileWriter.write("M; JMP");
+                this.fileWriter.write("M;JMP");
                 this.fileWriter.newLine();
                 //write boolean label
                 this.fileWriter.write("(boolean"+lineCount+")");
