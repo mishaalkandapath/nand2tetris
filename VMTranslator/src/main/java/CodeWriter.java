@@ -28,7 +28,7 @@ public class CodeWriter {
      * @throws IOException if such a file cannot be created or does not exist
      */
     public CodeWriter(String filename, HashMap<String, String> operatorSymbols, HashMap<String, Integer> memorySegmentIndices) throws IOException {
-        this.fileWriter= new BufferedWriter(new FileWriter(filename + ".asm"));
+        this.fileWriter= new BufferedWriter(new FileWriter(filename + "asm"));
         this.operatorSymbols = operatorSymbols;
         this.memorySegmentIndices = memorySegmentIndices;
         this.filename = filename;
@@ -84,6 +84,7 @@ public class CodeWriter {
     }
 
     public void writePushPop(Command command, String segment, int index) throws IOException {
+        System.out.println(segment);
         if (command == Command.C_PUSH){
             accessMem(segment, index, true);
             accessLastInStack();
@@ -91,6 +92,7 @@ public class CodeWriter {
             this.fileWriter.newLine();
             //need this value in D register
             this.fileWriter.write("M=D");
+            this.fileWriter.newLine();
             incrementStack();
         }else{
             //pop
@@ -150,6 +152,7 @@ public class CodeWriter {
             }
             case "constant" -> {
                 this.fileWriter.write(String.format("D=%d", index));
+                this.fileWriter.newLine();
             }
             default -> {
                 this.fileWriter.write(String.format("@%s", this.memorySegmentIndices.get(segment)));

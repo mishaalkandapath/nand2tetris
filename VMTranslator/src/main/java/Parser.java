@@ -39,7 +39,11 @@ public class Parser {
      * call only if there are more lines
      */
     public void advance(){
+
         currLine = vmScannedFile.nextLine();
+        while ((currLine.contains("//") || currLine.length() == 0) && hasMoreCommands()){
+            currLine = vmScannedFile.nextLine();
+        }
     }
 
     /**
@@ -59,7 +63,7 @@ public class Parser {
      * @return the first argument in command. Do not call if line of type C_RETURN
      */
     public String arg1(){
-        return currLine.split(" ")[0];
+        return currLine.split(" " ).length == 1 ? currLine.split(" ")[0] : currLine.split(" ")[1];
     }
 
     /**
@@ -67,17 +71,7 @@ public class Parser {
      * @return appropriate memory segment
      */
     public int arg2(){
-        return switch (currLine.split(" ")[1]){
-            case "constant" -> 0;
-            case "local" -> 1;
-            case "argument" -> 2;
-            case "this" -> 3;
-            case "that" -> 4;
-            case "static" -> 5;
-            case "pointer" -> 6;
-            case "temp" -> 7;
-            default -> -1; //invalid memory segment
-        };
+        return Integer.parseInt(currLine.split(" ")[2]);
     }
 
     public void close(){

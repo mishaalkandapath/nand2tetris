@@ -23,10 +23,14 @@ public class Main {
             while (parser.hasMoreCommands()){
                 parser.advance();
                 Command type = parser.commandType();
+                System.out.println(type);
                 switch (type){
                     case C_ARITHMETIC_BIN -> lines += codeWriter.writeArithmeticBinary(parser.arg1(), lines);
                     case C_ARITHMETIC_UN -> codeWriter.writeArithmeticUnary(parser.arg1());
-                    case C_POP, C_PUSH -> codeWriter.writePushPop(type, parser.arg1(), parser.arg2());
+                    case C_POP, C_PUSH -> {
+                        codeWriter.writePushPop(type, parser.arg1(), parser.arg2());
+                        System.out.println(parser.arg2());
+                    }
                 }
             }
             codeWriter.close();//close the file
