@@ -149,7 +149,23 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
+    public void writeGoto(String label) throws  IOException{
+        this.fileWriter.write("@" + this.filename + "$" + label);
+        this.fileWriter.newLine();
+        this.fileWriter.write("0;JMP");
+        this.fileWriter.newLine();
+    }
 
+    public void writeIf(String label) throws IOException{
+        accessLastInStack();
+        this.fileWriter.write("D=M"); //store the last value in the data register
+        this.fileWriter.newLine();
+        this.fileWriter.write("@"+ this.filename + "$" + label);
+        this.fileWriter.newLine();
+        this.fileWriter.write("!D;JEQ"); //if D is true, jump
+        this.fileWriter.newLine();
+        writePushPop(Command.C_POP, "temp", 0); //pop the element off the stack
+    }
 
     public void close() throws IOException {
         this.fileWriter.close();
