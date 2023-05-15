@@ -3,7 +3,10 @@ package main.java;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class CodeWriter {
 
@@ -20,17 +23,47 @@ public class CodeWriter {
     private final HashMap<String, String> operatorSymbols;
     private final HashMap<String, Integer> memorySegmentIndices;
     private final BufferedWriter fileWriter;
-    private final String filename;
+    private String filename;
+
 
     /**
      * create a buffered file writer with the given name to create filename.asm
      * @param filename the given filename for filename.asm
      * @throws IOException if such a file cannot be created or does not exist
      */
-    public CodeWriter(String filename, HashMap<String, String> operatorSymbols, HashMap<String, Integer> memorySegmentIndices) throws IOException {
+    public CodeWriter(String filename, boolean sysInitPresent, HashMap<String, String> operatorSymbols, HashMap<String, Integer> memorySegmentIndices) throws IOException {
         this.fileWriter= new BufferedWriter(new FileWriter(filename + "asm"));
         this.operatorSymbols = operatorSymbols;
         this.memorySegmentIndices = memorySegmentIndices;
+        this.filename = "";
+
+        if (sysInitPresent){
+            //there is a sysinit, so run the code to call it,
+            //this should be called always, but the course testing is weird sigh
+            //set the stack value
+            this.fileWriter.write("@SP");
+            this.fileWriter.newLine();
+            this.fileWriter.write("M=256");
+            this.fileWriter.newLine();
+            //set the LCL to be the same as the stack for now
+            this.fileWriter.write("@LCL");
+            this.fileWriter.newLine();
+            this.fileWriter.write("M=256");
+            this.fileWriter.newLine();
+            //similarly for arg:
+            //set the LCL to be the same as the stack for now
+            this.fileWriter.write("@ARG");
+            this.fileWriter.newLine();
+            this.fileWriter.write("M=256");
+            this.fileWriter.newLine();
+            //everything else is of global memory scope, or is this or that
+
+            //call the sys.init function if it exists
+            saveStateCallFn("Sys.init", "ret", 0, 0);
+        }
+    }
+
+    public void setFilename(String filename){
         this.filename = filename;
     }
 
@@ -113,6 +146,71 @@ public class CodeWriter {
 
     //writer helper methods:
 
+    private void saveStateCallFn(String funcName, String label, int count, int argNo) throws IOException { //count is used if more than one call to another function in a function
+        //store the value to run's address in stack
+        String finalLabel = this.filename.equals("") ? label : "@"+this.filename + "$" + label + "." + count;
+
+        this.fileWriter.write("@" + finalLabel);
+        this.fileWriter.newLine();
+
+        //store the value in D
+        this.fileWriter.write("D=A");
+        this.fileWriter.newLine();
+        //set the stack pointer to the return address
+        this.fileWriter.write("@SP");
+        this.fileWriter.newLine();
+        this.fileWriter.write("M=D");
+        this.fileWriter.newLine();
+        //increment thestack
+        incrementStack();
+
+        //save the LCL, ARG etc. addresses here
+        List<String> memAreas = Arrays.asList("LCL", "ARG", "THIS", "THAT");
+
+        for (String area: memAreas){
+            saveAddress(area);
+            incrementStack();
+        }
+        //modify arg address as sp - n - 5
+        this.fileWriter.write("D=" + Integer.toString(5 + argNo));
+        this.fileWriter.write("@SP");
+        this.fileWriter.newLine();
+        this.fileWriter.write("D=M-D");
+        this.fileWriter.newLine();
+
+        this.fileWriter.write("@ARG");
+        this.fileWriter.newLine();
+        this.fileWriter.write("M=D");
+
+        //set the lcl address as the current stack address:
+        this.fileWriter.write("@SP");
+        this.fileWriter.newLine();
+        this.fileWriter.write("D=M");
+        this.fileWriter.newLine();
+        this.fileWriter.write("@LCL");
+        this.fileWriter.newLine();
+        this.fileWriter.write("M=D");
+        this.fileWriter.newLine();
+
+        //go the required label of the function
+        this.fileWriter.write("@"+funcName);
+        this.fileWriter.newLine();
+        this.fileWriter.write("0;JMP"); //jump to label
+        this.fileWriter.newLine();
+        this.fileWriter.write("(" + finalLabel + ")");
+
+    }
+
+
+    private void saveAddress(String memLabel) throws IOException {
+        this.fileWriter.write("@"+memLabel);
+        this.fileWriter.newLine();
+        //store the address value in D
+        this.fileWriter.write("D=M");
+        this.fileWriter.newLine();
+        saveIntoStack();
+    }
+
     private void accessLastInStack() throws IOException{
         this.fileWriter.write("@SP"); //get the current pointer to the stack
         this.fileWriter.newLine();
@@ -130,6 +228,13 @@ public class CodeWriter {
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
         this.fileWriter.write("M=M+1");
+        this.fileWriter.newLine();
+    }
+
+    private void saveIntoStack() throws IOException{
+        this.fileWriter.write("@SP");
+        this.fileWriter.newLine();
+        this.fileWriter.write("M=D");
         this.fileWriter.newLine();
     }
 

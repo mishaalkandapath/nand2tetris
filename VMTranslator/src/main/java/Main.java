@@ -29,7 +29,7 @@ public class Main {
                     loadOperationSymbols(),
                     loadMemSegments()); //same codewriter for all the files, writes into one file only
             for (String file: files){
-                Parser parser = new Parser(args[0] + "");
+                Parser parser = new Parser(file);
                 while (parser.hasMoreCommands()){
                     parser.advance();
                     Command type = parser.commandType();
