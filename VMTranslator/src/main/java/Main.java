@@ -2,7 +2,13 @@ package main.java;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Main {
 
@@ -14,27 +20,32 @@ public class Main {
      */
     public static void main(String[] args) throws IOException {
         //create the parser:
+        boolean isFileName = args[0].contains("."); //is the given name a vm file or a directory of many vm files.
+        List<String> files = isFileName ? List.of(args[0]) : filesInDir(Path.of(args[0]));
+
         try {
             int lines = 0;
-            Parser parser = new Parser(args[0]);
-            CodeWriter codeWriter = new CodeWriter(args[0].substring(0, args[0].length() - 2),
+            CodeWriter codeWriter = new CodeWriter(isFileName ? args[0].substring(0, args[0].length() - 2) : args[0],
                     loadOperationSymbols(),
-                    loadMemSegments());
-            while (parser.hasMoreCommands()){
-                parser.advance();
-                Command type = parser.commandType();
-                System.out.println(type);
-                switch (type){
-                    case C_ARITHMETIC_BIN -> lines += codeWriter.writeArithmeticBinary(parser.arg1(), lines);
-                    case C_ARITHMETIC_UN -> codeWriter.writeArithmeticUnary(parser.arg1());
-                    case C_POP, C_PUSH -> {
-                        codeWriter.writePushPop(type, parser.arg1(), parser.arg2());
-                        System.out.println(parser.arg2());
+                    loadMemSegments()); //same codewriter for all the files, writes into one file only
+            for (String file: files){
+                Parser parser = new Parser(args[0] + "");
+                while (parser.hasMoreCommands()){
+                    parser.advance();
+                    Command type = parser.commandType();
+                    System.out.println(type);
+                    switch (type){
+                        case C_ARITHMETIC_BIN -> lines += codeWriter.writeArithmeticBinary(parser.arg1(), lines);
+                        case C_ARITHMETIC_UN -> codeWriter.writeArithmeticUnary(parser.arg1());
+                        case C_POP, C_PUSH -> {
+                            codeWriter.writePushPop(type, parser.arg1(), parser.arg2());
+                            System.out.println(parser.arg2());
+                        }
                     }
                 }
+                codeWriter.close();//close the file
+                parser.close();
             }
-            codeWriter.close();//close the file
-            parser.close();
         } catch (FileNotFoundException e) {
             System.out.println("File probably not found");
             throw new RuntimeException(e);
@@ -42,6 +53,22 @@ public class Main {
 
 
 
+    }
+
+    private static List<String> filesInDir(Path path) throws IOException{
+        if (!Files.isDirectory(path)) {
+            throw new IllegalArgumentException("Path must be a directory!");
+        }
+
+        List<String> files;
+        try (Stream<Path> walk = Files.walk(path)){
+            files = walk
+                    .filter(p -> !Files.isDirectory(p))
+                    .map(p -> p.toString().toLowerCase())
+                    .filter(f -> f.endsWith(".vm"))
+                    .collect(Collectors.toList());
+        }
+        return files;
     }
 
     private static HashMap<String, Integer> loadMemSegments(){
