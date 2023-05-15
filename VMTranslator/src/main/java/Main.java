@@ -26,6 +26,7 @@ public class Main {
         try {
             int lines = 0;
             CodeWriter codeWriter = new CodeWriter(isFileName ? args[0].substring(0, args[0].length() - 2) : args[0],
+                    files.contains("Sys.vm"),
                     loadOperationSymbols(),
                     loadMemSegments()); //same codewriter for all the files, writes into one file only
             for (String file: files){
