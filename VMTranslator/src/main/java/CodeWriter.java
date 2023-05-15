@@ -38,33 +38,37 @@ public class CodeWriter {
         this.filename = "";
 
         if (sysInitPresent){
-            //there is a sysinit, so run the code to call it,
-            //this should be called always, but the course testing is weird sigh
-            //set the stack value
-            this.fileWriter.write("@SP");
-            this.fileWriter.newLine();
-            this.fileWriter.write("M=256");
-            this.fileWriter.newLine();
-            //set the LCL to be the same as the stack for now
-            this.fileWriter.write("@LCL");
-            this.fileWriter.newLine();
-            this.fileWriter.write("M=256");
-            this.fileWriter.newLine();
-            //similarly for arg:
-            //set the LCL to be the same as the stack for now
-            this.fileWriter.write("@ARG");
-            this.fileWriter.newLine();
-            this.fileWriter.write("M=256");
-            this.fileWriter.newLine();
-            //everything else is of global memory scope, or is this or that
-
-            //call the sys.init function if it exists
-            saveStateCallFn("Sys.init", "ret", 0, 0);
+            writeInit();
         }
     }
 
     public void setFilename(String filename){
         this.filename = filename;
+    }
+
+    public void writeInit() throws IOException{
+        //there is a sysinit, so run the code to call it,
+        //this should be called always, but the course testing is weird sigh
+        //set the stack value
+        this.fileWriter.write("@SP");
+        this.fileWriter.newLine();
+        this.fileWriter.write("M=256");
+        this.fileWriter.newLine();
+        //set the LCL to be the same as the stack for now
+        this.fileWriter.write("@LCL");
+        this.fileWriter.newLine();
+        this.fileWriter.write("M=256");
+        this.fileWriter.newLine();
+        //similarly for arg:
+        //set the LCL to be the same as the stack for now
+        this.fileWriter.write("@ARG");
+        this.fileWriter.newLine();
+        this.fileWriter.write("M=256");
+        this.fileWriter.newLine();
+        //everything else is of global memory scope, or is this or that
+
+        //call the sys.init function if it exists
+        saveStateCallFn("Sys.init", "ret", 0, 0);
     }
 
     /**
@@ -139,6 +143,13 @@ public class CodeWriter {
             decrementStack();
         }
     }
+
+    public void writeLabel(String label) throws IOException {
+        this.fileWriter.write(this.filename + "$" + label);
+        this.fileWriter.newLine();
+    }
+
+
 
     public void close() throws IOException {
         this.fileWriter.close();
