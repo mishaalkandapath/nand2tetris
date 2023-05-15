@@ -55,6 +55,12 @@ public class Parser {
             case "push" -> Command.C_PUSH;
             case "pop" -> Command.C_POP;
             case "neg", "not" -> Command.C_ARITHMETIC_UN;
+            case "return" -> Command.C_RETURN;
+            case "goto" -> Command.C_GOTO;
+            case "if-goto" -> Command.C_IF;
+            case "call" -> Command.C_CALL;
+            case "function" -> Command.C_FUNCTION;
+            case "label" -> Command.C_LABEL;
             default -> Command.C_ARITHMETIC_BIN;
         };
     }
@@ -68,7 +74,7 @@ public class Parser {
 
     /**
      * Call only for C_POP, C_PUSH, C_FUNCTION, C_CALL
-     * @return appropriate memory segment
+     * @return appropriate integer to be returned.
      */
     public int arg2(){
         return Integer.parseInt(currLine.split(" ")[2]);
