@@ -3,7 +3,6 @@ package main.java;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -90,21 +89,28 @@ public class CodeWriter {
         this.fileWriter.newLine();
         switch (command){
             case "lt", "gt", "eq" ->{
+                //compute the difference first
+                this.fileWriter.write("D=M-D");
+                this.fileWriter.newLine();
+
                 this.fileWriter.write(String.format("@%s", "boolean" + lineCount));
                 this.fileWriter.newLine();
-                this.fileWriter.write(String.format("M-D;%s", this.operatorSymbols.get(command)));
+                this.fileWriter.write(String.format("D;%s", this.operatorSymbols.get(command)));
                 this.fileWriter.newLine();
                 //write the false condition
-                this.fileWriter.write("M=0");
+                accessSecondLastInStack();
+
+                this.fileWriter.write("M=0");//vomit a false
                 this.fileWriter.newLine();
                 this.fileWriter.write("@skipTrue"+lineCount);
                 this.fileWriter.newLine();
-                this.fileWriter.write("M;JMP");
+                this.fileWriter.write("D;JMP");
                 this.fileWriter.newLine();
                 //write boolean label
                 this.fileWriter.write("(boolean"+lineCount+")");
                 this.fileWriter.newLine();
-                this.fileWriter.write("M=1");
+                accessSecondLastInStack();
+                this.fileWriter.write("M=-1");//vomit a true; the eat-vomit cycle - Mishaal Kandapath
                 this.fileWriter.newLine();
                 //write the skip part
                 this.fileWriter.write("(skipTrue"+lineCount+")");
@@ -193,7 +199,7 @@ public class CodeWriter {
         this.fileWriter.newLine();
         this.fileWriter.write("M=D");
         this.fileWriter.newLine();
-        this.fileWriter.write("D=" + Integer.toString(numVars));
+        this.fileWriter.write("D=" + numVars);
         this.fileWriter.newLine();
         this.fileWriter.write("M=M+D");
         this.fileWriter.newLine();
@@ -226,7 +232,7 @@ public class CodeWriter {
             incrementStack();
         }
         //modify arg address as sp - n - 5
-        this.fileWriter.write("D=" + Integer.toString(5 + numArgs));
+        this.fileWriter.write("D=" + (5+numArgs));
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
         this.fileWriter.write("D=M-D");
@@ -352,6 +358,15 @@ public class CodeWriter {
         this.fileWriter.write("A=M-1"); //move to last element in stack
         this.fileWriter.newLine();
     }
+
+    private void accessSecondLastInStack() throws IOException{
+        this.fileWriter.write("@SP"); //eat two of the current stack values
+        this.fileWriter.newLine();
+        this.fileWriter.write("A=M-1");
+        this.fileWriter.newLine();
+        this.fileWriter.write("A=A-1");//decrease by one more for M-2
+        this.fileWriter.newLine();
+    }
     private void decrementStack() throws IOException {
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
@@ -392,7 +407,9 @@ public class CodeWriter {
                 this.fileWriter.newLine();
             }
             case "constant" -> {
-                this.fileWriter.write(String.format("D=%d", index));
+                this.fileWriter.write("@"+index);
+                this.fileWriter.newLine();
+                this.fileWriter.write("D=A");
                 this.fileWriter.newLine();
             }
             default -> {
