@@ -3,6 +3,7 @@ package main.java;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class Parser {
  /*
@@ -41,7 +42,7 @@ public class Parser {
     public void advance(){
 
         currLine = vmScannedFile.nextLine();
-        while ((currLine.contains("//") || currLine.length() == 0) && hasMoreCommands()){
+        while ((currLine.length() == 0 || (currLine.indexOf("//") == 0)) && hasMoreCommands()){
             currLine = vmScannedFile.nextLine();
         }
     }
@@ -77,7 +78,7 @@ public class Parser {
      * @return appropriate integer to be returned.
      */
     public int arg2(){
-        return Integer.parseInt(currLine.split(" ")[2]);
+        return Integer.parseInt(currLine.split(" ")[2].strip());
     }
 
     public void close(){

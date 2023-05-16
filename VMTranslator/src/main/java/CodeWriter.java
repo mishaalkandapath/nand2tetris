@@ -155,7 +155,7 @@ public class CodeWriter {
     }
 
     public void writeLabel(String label) throws IOException {
-        this.fileWriter.write(this.filename + "$" + label);
+        this.fileWriter.write("(" + this.filename + "$" + label + ")");
         this.fileWriter.newLine();
     }
 
@@ -170,11 +170,13 @@ public class CodeWriter {
         accessLastInStack();
         this.fileWriter.write("D=M"); //store the last value in the data register
         this.fileWriter.newLine();
+        decrementStack();
         this.fileWriter.write("@"+ this.filename + "$" + label);
         this.fileWriter.newLine();
-        this.fileWriter.write("!D;JEQ"); //if D is true, jump
+//        this.fileWriter.write("!D;JEQ"); //if D is true, jump
+//        this.fileWriter.newLine();
+        this.fileWriter.write("-D;JLT");
         this.fileWriter.newLine();
-        writePushPop(Command.C_POP, "temp", 0); //pop the element off the stack
     }
 
     public void writeFunction(String functionName, int numVars) throws IOException {
