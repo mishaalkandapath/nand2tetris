@@ -185,7 +185,7 @@ public class CodeWriter {
         this.fileWriter.newLine();
         this.fileWriter.write("@LCL");
         this.fileWriter.newLine();
-        this.fileWriter.write("A=A");
+        this.fileWriter.write("A=M");
         this.fileWriter.newLine();
         this.fileWriter.write("M=0");
         this.fileWriter.newLine();
@@ -196,19 +196,20 @@ public class CodeWriter {
             this.fileWriter.newLine();
         }
 
-        //set the sp value:
-        this.fileWriter.write("@LCL");
-        this.fileWriter.newLine();
-        this.fileWriter.write("D=A");
+//        //set the sp value:
+//        this.fileWriter.write("@LCL");
+//        this.fileWriter.newLine();
+        this.fileWriter.write("D=A+1");
         this.fileWriter.newLine();
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
         this.fileWriter.write("M=D");
         this.fileWriter.newLine();
-        this.fileWriter.write("D=" + numVars);
-        this.fileWriter.newLine();
-        this.fileWriter.write("M=M+D");
-        this.fileWriter.newLine();
+
+//        this.fileWriter.write("D=" + numVars);
+//        this.fileWriter.newLine();
+//        this.fileWriter.write("M=M+D");
+//        this.fileWriter.newLine();
     }
 
     public void writeCall(String functionName, int numArgs, int count) throws IOException{
@@ -272,28 +273,32 @@ public class CodeWriter {
         //access local addr:
         this.fileWriter.write("@LCL");
         this.fileWriter.newLine();
-        this.fileWriter.write("D=A"); //store the address in D
+        this.fileWriter.write("D=M"); //store the address in D
         this.fileWriter.newLine();
-        this.fileWriter.write("@R0"); //using temp variable to store the lcl address currently
+        this.fileWriter.write("@R13"); //using temp variable to store the lcl address currently
         this.fileWriter.newLine();
         this.fileWriter.write("M=D");
         this.fileWriter.newLine();
         //get the address of the return address
-        this.fileWriter.write("@R1");
+        this.fileWriter.write("@R14");
         this.fileWriter.newLine();
         this.fileWriter.write("M=D");
         this.fileWriter.newLine();
-        this.fileWriter.write("D=5");
+        this.fileWriter.write("@5");
+        this.fileWriter.newLine();
+        this.fileWriter.write("D=A");
+        this.fileWriter.newLine();
+        this.fileWriter.write("@R14");
         this.fileWriter.newLine();
         this.fileWriter.write("M=M-D"); // this is the address of where the return address is stored
         this.fileWriter.newLine();
 
         // get the return address:
-        this.fileWriter.write("@M");
+        this.fileWriter.write("A=M");
         this.fileWriter.newLine();
         this.fileWriter.write("D=M"); //this is the value of the return addresss
         this.fileWriter.newLine();
-        this.fileWriter.write("@R1");
+        this.fileWriter.write("@R14");
         this.fileWriter.newLine();
         this.fileWriter.write("M=D"); //store into r1, another tmep variable
         this.fileWriter.newLine();
@@ -303,7 +308,7 @@ public class CodeWriter {
         //re-establish the stack pointer:
         this.fileWriter.write("@ARG");
         this.fileWriter.newLine();
-        this.fileWriter.write("D=A");
+        this.fileWriter.write("D=M");
         this.fileWriter.newLine();
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
@@ -317,11 +322,12 @@ public class CodeWriter {
         }
 
         //goto retaddr:
-        this.fileWriter.write("@R1"); //acess the return address
+        this.fileWriter.write("@R14"); //acess the return address
         this.fileWriter.newLine();
-        this.fileWriter.write("@M"); // get the address
+        this.fileWriter.write("A=M"); // get the address
         this.fileWriter.newLine();
         this.fileWriter.write("0;JMP"); //jump to return address
+        this.fileWriter.newLine();
     }
 
     public void close() throws IOException {
@@ -341,13 +347,14 @@ public class CodeWriter {
 
     private void restoreAddresses(String segment) throws IOException{
 
-        this.fileWriter.write("@R0");
+        this.fileWriter.write("@R13");
         this.fileWriter.newLine();
         this.fileWriter.write("D=M-1"); //this is the address where the address to that is stored
         this.fileWriter.newLine();
         this.fileWriter.write("M=M-1"); //decrement M by 1 fornext time
+        this.fileWriter.newLine();
 
-        this.fileWriter.write("@D"); //go to the address for that
+        this.fileWriter.write("A=D"); //go to the address for that
         this.fileWriter.newLine();
         this.fileWriter.write("D=M"); //stores the address for that
         this.fileWriter.newLine();
