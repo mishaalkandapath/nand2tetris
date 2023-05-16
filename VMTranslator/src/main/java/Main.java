@@ -20,8 +20,9 @@ public class Main {
      */
     public static void main(String[] args) throws IOException {
         //create the parser:
+        String fileOrDirName = Path.of(args[0]).getFileName().toString();
         boolean isFileName = args[0].contains("."); //is the given name a vm file or a directory of many vm files.
-        List<String> files = isFileName ? List.of(args[0]) : filesInDir(Path.of(args[0]));
+        List<Path> files = isFileName ? List.of(Path.of(args[0])) : filesInDir(Path.of(args[0]));
 
         try {
             int lines = 0;
@@ -29,9 +30,9 @@ public class Main {
                     files.contains("Sys.vm"),
                     loadOperationSymbols(),
                     loadMemSegments()); //same codewriter for all the files, writes into one file only
-            for (String file: files){
-                Parser parser = new Parser(file);
-                codeWriter.setFilename(file);
+            for (Path file: files){
+                Parser parser = new Parser(file.toString());
+                codeWriter.setFilename(file.getFileName().toString());
                 while (parser.hasMoreCommands()){
                     parser.advance();
                     Command type = parser.commandType();
@@ -51,6 +52,7 @@ public class Main {
                         case C_RETURN -> codeWriter.writeReturn();
 
                     }
+                    codeWriter.writeNewLine(); //seperate commands
                 }
                 codeWriter.close();//close the file
                 parser.close();
@@ -64,18 +66,14 @@ public class Main {
 
     }
 
-    private static List<String> filesInDir(Path path) throws IOException{
+    private static List<Path> filesInDir(Path path) throws IOException{
         if (!Files.isDirectory(path)) {
             throw new IllegalArgumentException("Path must be a directory!");
         }
 
-        List<String> files;
+        List<Path> files;
         try (Stream<Path> walk = Files.walk(path)){
-            files = walk
-                    .filter(p -> !Files.isDirectory(p))
-                    .map(p -> p.toString().toLowerCase())
-                    .filter(f -> f.endsWith(".vm"))
-                    .collect(Collectors.toList());
+            files = walk.filter(p -> !Files.isDirectory(p)).collect(Collectors.toList());
         }
         return files;
     }

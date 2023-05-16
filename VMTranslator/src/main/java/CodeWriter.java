@@ -45,6 +45,10 @@ public class CodeWriter {
         this.filename = filename;
     }
 
+    public void writeNewLine() throws IOException{
+        this.fileWriter.newLine();
+    }
+
     public void writeInit() throws IOException{
         //there is a sysinit, so run the code to call it,
         //this should be called always, but the course testing is weird sigh
@@ -391,20 +395,26 @@ public class CodeWriter {
     private void accessMem(String segment, int index, boolean isPush) throws IOException{
         switch (segment) {
             case "this", "that"-> {
-                this.fileWriter.write(String.format("@%s", this.memorySegmentIndices.get(segment)));
+                this.fileWriter.write("@"+ (segment.equals("this") ? "THIS" : "THAT"));
                 this.fileWriter.newLine();
+                accessLocalMem(isPush, index);
             }
             case "temp" -> {
                 this.fileWriter.write(String.format("@%d", index + this.memorySegmentIndices.get(segment)));
                 this.fileWriter.newLine();
+                accessGlobalMem(isPush);
             }
             case "static" -> {
                 this.fileWriter.write(String.format("@%s.%d", filename, index));
                 this.fileWriter.newLine();
+                accessGlobalMem(isPush);
+
             }
             case "pointer" -> {
-                this.fileWriter.write(String.format("@%d", index == 1 ? this.memorySegmentIndices.get("this") : this.memorySegmentIndices.get("that")));
+                this.fileWriter.write(String.format("@%s", index == 0 ? "THIS" : "THAT"));
                 this.fileWriter.newLine();
+                accessGlobalMem(isPush);
+
             }
             case "constant" -> {
                 this.fileWriter.write("@"+index);
@@ -412,18 +422,37 @@ public class CodeWriter {
                 this.fileWriter.write("D=A");
                 this.fileWriter.newLine();
             }
-            default -> {
-                this.fileWriter.write(String.format("@%s", this.memorySegmentIndices.get(segment)));
+            case "local" -> {
+                this.fileWriter.write("@LCL");
                 this.fileWriter.newLine();
-                this.fileWriter.write(String.format("A=M+%d", index));
+                accessLocalMem(isPush, index);
+            }
+            case "argument" -> {
+                this.fileWriter.write("@ARG");
                 this.fileWriter.newLine();
+                accessLocalMem(isPush, index);
             }
         }
+    }
 
-        if (!segment.equals("constant")) { // there is no pop for constant
-            this.fileWriter.write(String.format("%s=M", isPush ? "D":"M"));
+    private void accessGlobalMem(boolean isPush) throws IOException {
+        this.fileWriter.write(String.format("%s=%s", isPush ? "D":"M", isPush ? "M":"D"));
+        this.fileWriter.newLine();
+    }
+
+    private void accessLocalMem(boolean isPush, int index) throws IOException{
+        this.fileWriter.write("A=M");
+        this.fileWriter.newLine();
+
+        //offset by index if needed:
+        for (int i = 0; i<index; i++){
+            this.fileWriter.write("A=A+1");
             this.fileWriter.newLine();
         }
+
+        this.fileWriter.write(String.format("%s=M", isPush ? "D":"M"));
+        this.fileWriter.newLine();
+
     }
 
 
