@@ -2,8 +2,11 @@ package main.java;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Parser {
  /*
@@ -45,6 +48,7 @@ public class Parser {
         while ((currLine.length() == 0 || (currLine.indexOf("//") == 0)) && hasMoreCommands()){
             currLine = vmScannedFile.nextLine();
         }
+//        System.out.println(Arrays.stream(currLine.split(" ")).toList());
     }
 
     /**
@@ -70,6 +74,11 @@ public class Parser {
      * @return the first argument in command. Do not call if line of type C_RETURN
      */
     public String arg1(){
+        if (currLine.contains("//")){
+            //sigh
+            String[] parts = currLine.substring(0, currLine.indexOf("  ")).split(" ");
+            return parts.length == 1 ? parts[0] : parts[1];
+        }
         return currLine.split(" " ).length == 1 ? currLine.split(" ")[0] : currLine.split(" ")[1];
     }
 
@@ -78,6 +87,9 @@ public class Parser {
      * @return appropriate integer to be returned.
      */
     public int arg2(){
+        if (currLine.split(" ")[2].contains("//")){
+            return Integer.parseInt(currLine.split(" ")[2].substring(0, currLine.split(" ")[2].indexOf("//")).strip());
+        }
         return Integer.parseInt(currLine.split(" ")[2].strip());
     }
 

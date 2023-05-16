@@ -53,20 +53,24 @@ public class CodeWriter {
         //there is a sysinit, so run the code to call it,
         //this should be called always, but the course testing is weird sigh
         //set the stack value
+        this.fileWriter.write("@256");
+        this.fileWriter.newLine();
+        this.fileWriter.write("D=A");
+        this.fileWriter.newLine();
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
-        this.fileWriter.write("M=256");
+        this.fileWriter.write("M=D");
         this.fileWriter.newLine();
         //set the LCL to be the same as the stack for now
         this.fileWriter.write("@LCL");
         this.fileWriter.newLine();
-        this.fileWriter.write("M=256");
+        this.fileWriter.write("M=D");
         this.fileWriter.newLine();
         //similarly for arg:
         //set the LCL to be the same as the stack for now
         this.fileWriter.write("@ARG");
         this.fileWriter.newLine();
-        this.fileWriter.write("M=256");
+        this.fileWriter.write("M=D");
         this.fileWriter.newLine();
         //everything else is of global memory scope, or is this or that
 
@@ -173,43 +177,42 @@ public class CodeWriter {
         decrementStack();
         this.fileWriter.write("@"+ this.filename + "$" + label);
         this.fileWriter.newLine();
-//        this.fileWriter.write("!D;JEQ"); //if D is true, jump
-//        this.fileWriter.newLine();
+        this.fileWriter.write("!D;JEQ"); //if D is true, jump
+        this.fileWriter.newLine();
         this.fileWriter.write("-D;JLT");
         this.fileWriter.newLine();
     }
 
     public void writeFunction(String functionName, int numVars) throws IOException {
         this.fileWriter.write("(" + functionName + ")");
-        //set up the local variables as 0
         this.fileWriter.newLine();
-        this.fileWriter.write("@LCL");
-        this.fileWriter.newLine();
-        this.fileWriter.write("A=M");
-        this.fileWriter.newLine();
-        this.fileWriter.write("M=0");
-        this.fileWriter.newLine();
-        for (int i=0; i < numVars-1; i++){
-            this.fileWriter.write("A=A+1");
+        if (numVars != 0){ //if there are non, nothign to set up really
+            //set up the local variables as 0
+            this.fileWriter.write("@LCL");
+            this.fileWriter.newLine();
+
+            this.fileWriter.write("A=M");
             this.fileWriter.newLine();
             this.fileWriter.write("M=0");
             this.fileWriter.newLine();
+
+            for (int i=0; i < numVars-1; i++){
+                this.fileWriter.write("A=A+1");
+                this.fileWriter.newLine();
+                this.fileWriter.write("M=0");
+                this.fileWriter.newLine();
+            }
+
+            this.fileWriter.write("D=A+1");
+            this.fileWriter.newLine();
+
+            //setup stack
+            this.fileWriter.write("@SP");
+            this.fileWriter.newLine();
+            this.fileWriter.write("M=D");
+            this.fileWriter.newLine();
+
         }
-
-//        //set the sp value:
-//        this.fileWriter.write("@LCL");
-//        this.fileWriter.newLine();
-        this.fileWriter.write("D=A+1");
-        this.fileWriter.newLine();
-        this.fileWriter.write("@SP");
-        this.fileWriter.newLine();
-        this.fileWriter.write("M=D");
-        this.fileWriter.newLine();
-
-//        this.fileWriter.write("D=" + numVars);
-//        this.fileWriter.newLine();
-//        this.fileWriter.write("M=M+D");
-//        this.fileWriter.newLine();
     }
 
     public void writeCall(String functionName, int numArgs, int count) throws IOException{
@@ -224,7 +227,8 @@ public class CodeWriter {
         this.fileWriter.write("D=A");
         this.fileWriter.newLine();
         //set the stack pointer to the return address
-        this.fileWriter.write("@SP");
+        this.accessLastInStack();
+        this.fileWriter.write("A=A+1"); //go the empty spot
         this.fileWriter.newLine();
         this.fileWriter.write("M=D");
         this.fileWriter.newLine();
@@ -239,7 +243,10 @@ public class CodeWriter {
             incrementStack();
         }
         //modify arg address as sp - n - 5
-        this.fileWriter.write("D=" + (5+numArgs));
+        this.fileWriter.write("@"+ (5 + numArgs));
+        this.fileWriter.newLine();
+        this.fileWriter.write("D=A");
+        this.fileWriter.newLine();
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
         this.fileWriter.write("D=M-D");
@@ -248,6 +255,7 @@ public class CodeWriter {
         this.fileWriter.write("@ARG");
         this.fileWriter.newLine();
         this.fileWriter.write("M=D");
+        this.fileWriter.newLine();
 
         //set the lcl address as the current stack address:
         this.fileWriter.write("@SP");
@@ -265,6 +273,7 @@ public class CodeWriter {
         this.fileWriter.write("0;JMP"); //jump to label
         this.fileWriter.newLine();
         this.fileWriter.write("(" + finalLabel + ")"); //this is the place to return to
+        this.fileWriter.newLine();
 
     }
 
@@ -395,7 +404,8 @@ public class CodeWriter {
     }
 
     private void saveIntoStack() throws IOException{
-        this.fileWriter.write("@SP");
+        this.accessLastInStack();
+        this.fileWriter.write("A=A+1"); //go the empty spot
         this.fileWriter.newLine();
         this.fileWriter.write("M=D");
         this.fileWriter.newLine();

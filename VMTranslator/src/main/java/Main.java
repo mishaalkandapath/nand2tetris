@@ -23,14 +23,16 @@ public class Main {
         String fileOrDirName = Path.of(args[0]).getFileName().toString();
         boolean isFileName = args[0].contains("."); //is the given name a vm file or a directory of many vm files.
         List<Path> files = isFileName ? List.of(Path.of(args[0])) : filesInDir(Path.of(args[0]));
-
         try {
             int lines = 0;
-            CodeWriter codeWriter = new CodeWriter(isFileName ? args[0].substring(0, args[0].length() - 2) : args[0],
-                    files.contains("Sys.vm"),
+            CodeWriter codeWriter = new CodeWriter(isFileName ? args[0].substring(0, args[0].length() - 2) : args[0] + fileOrDirName + ".",
+                    files.stream().map(p -> p.getFileName().toString()).toList().contains("Sys.vm"),
                     loadOperationSymbols(),
                     loadMemSegments()); //same codewriter for all the files, writes into one file only
             for (Path file: files){
+                if (!file.toString().contains(".vm")){ //skip other files in case of dir
+                    continue;
+                }
                 Parser parser = new Parser(file.toString());
                 codeWriter.setFilename(file.getFileName().toString());
                 while (parser.hasMoreCommands()){
@@ -54,9 +56,9 @@ public class Main {
                     }
                     codeWriter.writeNewLine(); //seperate commands
                 }
-                codeWriter.close();//close the file
                 parser.close();
             }
+            codeWriter.close();//close the file
         } catch (FileNotFoundException e) {
             System.out.println("File probably not found");
             throw new RuntimeException(e);
