@@ -177,6 +177,8 @@ public class CodeWriter {
         decrementStack();
         this.fileWriter.write("@"+ this.filename + "$" + label);
         this.fileWriter.newLine();
+
+        //this section is due to an abhorrent behaviour of the computer -
         this.fileWriter.write("!D;JEQ"); //if D is true, jump
         this.fileWriter.newLine();
         this.fileWriter.write("-D;JLT");

@@ -74,7 +74,7 @@ public class Parser {
      * @return the first argument in command. Do not call if line of type C_RETURN
      */
     public String arg1(){
-        if (currLine.contains("//")){
+        if (currLine.contains("//") && currLine.contains("  ")){
             //sigh
             String[] parts = currLine.substring(0, currLine.indexOf("  ")).split(" ");
             return parts.length == 1 ? parts[0] : parts[1];
