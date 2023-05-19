@@ -36,7 +36,7 @@ public class CodeWriter {
         this.memorySegmentIndices = memorySegmentIndices;
         this.filename = "";
 
-        if (sysInitPresent){
+        if (sysInitPresent){ //normally should assume this exists, role of compiler to comply
             writeInit();
         }
     }
@@ -45,10 +45,14 @@ public class CodeWriter {
         this.filename = filename;
     }
 
-    public void writeNewLine() throws IOException{
+    public void writeNewLine() throws IOException{ //used outside te seperate commands, j a debug feature not really required
         this.fileWriter.newLine();
     }
 
+    /**
+     * sets up the memory segments for the program, and calles the sys.init function
+     * @throws IOException if file error
+     */
     public void writeInit() throws IOException{
         //there is a sysinit, so run the code to call it,
         //this should be called always, but the course testing is weird sigh
@@ -79,7 +83,7 @@ public class CodeWriter {
     }
 
     /**
-     * write the arithmetic command
+     * write the arithmetic command for not and neg
      * @param command the given arithmetic command
      * @throws IOException if I/O error
      */
@@ -89,6 +93,13 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
+    /**
+     * write binary arithmetic commands
+     * @param command
+     * @param lineCount
+     * @return
+     * @throws IOException
+     */
     public int writeArithmeticBinary(String command, int lineCount) throws IOException{
         accessLastInStack();
         this.fileWriter.write("D=M"); //store the last element in the stack to the data register
@@ -98,32 +109,7 @@ public class CodeWriter {
         switch (command){
             case "lt", "gt", "eq" ->{
                 //compute the difference first
-                this.fileWriter.write("D=M-D");
-                this.fileWriter.newLine();
-
-                this.fileWriter.write(String.format("@%s", "boolean" + lineCount));
-                this.fileWriter.newLine();
-                this.fileWriter.write(String.format("D;%s", this.operatorSymbols.get(command)));
-                this.fileWriter.newLine();
-                //write the false condition
-                accessSecondLastInStack();
-
-                this.fileWriter.write("M=0");//vomit a false
-                this.fileWriter.newLine();
-                this.fileWriter.write("@skipTrue"+lineCount);
-                this.fileWriter.newLine();
-                this.fileWriter.write("D;JMP");
-                this.fileWriter.newLine();
-                //write boolean label
-                this.fileWriter.write("(boolean"+lineCount+")");
-                this.fileWriter.newLine();
-                accessSecondLastInStack();
-                this.fileWriter.write("M=-1");//vomit a true; the eat-vomit cycle - Mishaal Kandapath
-                this.fileWriter.newLine();
-                //write the skip part
-                this.fileWriter.write("(skipTrue"+lineCount+")");
-                this.fileWriter.newLine();
-                decrementStack();
+                writeComparativeArithmetic(command, lineCount);
                 return 1;
             }
             default -> {
@@ -341,12 +327,21 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
+    /**
+     * close the file stream wen over
+     * @throws IOException for file based errors
+     */
     public void close() throws IOException {
         this.fileWriter.close();
     }
 
     //writer helper methods:
 
+    /**
+     * get the address of where to return
+     * @param memLabel name of label of command to resume upon return
+     * @throws IOException for file based errors
+     */
     private void saveAddress(String memLabel) throws IOException {
         this.fileWriter.write("@"+memLabel);
         this.fileWriter.newLine();
@@ -356,18 +351,23 @@ public class CodeWriter {
         saveIntoStack();
     }
 
+    /**
+     * to restore segments on returning from a function
+     * @param segment can be of LCL, ARG, THIS, or THAT
+     * @throws IOException for file based errors
+     */
     private void restoreAddresses(String segment) throws IOException{
 
         this.fileWriter.write("@R13");
         this.fileWriter.newLine();
-        this.fileWriter.write("D=M-1"); //this is the address where the address to that is stored
+        this.fileWriter.write("D=M-1"); //this is the address where the address to segment is stored
         this.fileWriter.newLine();
-        this.fileWriter.write("M=M-1"); //decrement M by 1 fornext time
+        this.fileWriter.write("M=M-1"); //decrement M by 1 for next time
         this.fileWriter.newLine();
 
-        this.fileWriter.write("A=D"); //go to the address for that
+        this.fileWriter.write("A=D"); //go to the address for segment
         this.fileWriter.newLine();
-        this.fileWriter.write("D=M"); //stores the address for that
+        this.fileWriter.write("D=M"); //stores the address for segment
         this.fileWriter.newLine();
 
         this.fileWriter.write("@"+segment);
@@ -376,6 +376,10 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
+    /**
+     * select the address of last element in stack
+     * @throws IOException for file based errors
+     */
     private void accessLastInStack() throws IOException{
         this.fileWriter.write("@SP"); //get the current pointer to the stack
         this.fileWriter.newLine();
@@ -383,6 +387,11 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
+    /**
+     * select addr of last element in stack
+     * required for binary operations
+     * @throws IOException for file based errors
+     */
     private void accessSecondLastInStack() throws IOException{
         this.fileWriter.write("@SP"); //eat two of the current stack values
         this.fileWriter.newLine();
@@ -391,6 +400,11 @@ public class CodeWriter {
         this.fileWriter.write("A=A-1");//decrease by one more for M-2
         this.fileWriter.newLine();
     }
+
+    /**
+     * decrement the stack pointer
+     * @throws IOException for file based errors
+     */
     private void decrementStack() throws IOException {
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
@@ -398,6 +412,10 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
+    /**
+     * increment the stack pointer
+     * @throws IOException for file based errors
+     */
     private void incrementStack() throws IOException{
         this.fileWriter.write("@SP");
         this.fileWriter.newLine();
@@ -405,6 +423,10 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
+    /**
+     * write the value in D (specified outside) into the stack
+     * @throws IOException for file related errors
+     */
     private void saveIntoStack() throws IOException{
         this.accessLastInStack();
         this.fileWriter.write("A=A+1"); //go the empty spot
@@ -413,6 +435,13 @@ public class CodeWriter {
         this.fileWriter.newLine();
     }
 
+    /**
+     * access respective mem segment
+     * @param segment the segment in question: static, constant, etc
+     * @param index of the segment in question
+     * @param isPush indicates whether the current argument being processed is a push or pop
+     * @throws IOException if file error
+     */
     private void accessMem(String segment, int index, boolean isPush) throws IOException{
         switch (segment) {
             case "this", "that"-> {
@@ -456,11 +485,22 @@ public class CodeWriter {
         }
     }
 
+    /**
+     * access static, pointer, temp
+     * @param isPush indicates whether the commmand is a push or a pop
+     * @throws IOException if file error
+     */
     private void accessGlobalMem(boolean isPush) throws IOException {
         this.fileWriter.write(String.format("%s=%s", isPush ? "D":"M", isPush ? "M":"D"));
         this.fileWriter.newLine();
     }
 
+    /**
+     * access local, argument, stack, this, and that.
+     * @param isPush to indicate if the current command is push or pop
+     * @param index of memory segment being queried
+     * @throws IOException for file error
+     */
     private void accessLocalMem(boolean isPush, int index) throws IOException{
         this.fileWriter.write("A=M");
         this.fileWriter.newLine();
@@ -474,6 +514,41 @@ public class CodeWriter {
         this.fileWriter.write(String.format("%s=M", isPush ? "D":"M"));
         this.fileWriter.newLine();
 
+    }
+
+    /**
+     * helper function to write comparative functions, due to the presence of branching
+     * @param command the command being parsed and generated
+     * @param lineCount the number of branch statements generated in this code.
+     * @throws IOException if file error
+     */
+    private void writeComparativeArithmetic(String command, int lineCount) throws IOException {
+        this.fileWriter.write("D=M-D");
+        this.fileWriter.newLine();
+
+        this.fileWriter.write(String.format("@%s", "boolean" + lineCount));
+        this.fileWriter.newLine();
+        this.fileWriter.write(String.format("D;%s", this.operatorSymbols.get(command)));
+        this.fileWriter.newLine();
+        //write the false condition
+        accessSecondLastInStack();
+
+        this.fileWriter.write("M=0");//vomit a false
+        this.fileWriter.newLine();
+        this.fileWriter.write("@skipTrue"+lineCount);
+        this.fileWriter.newLine();
+        this.fileWriter.write("D;JMP");
+        this.fileWriter.newLine();
+        //write boolean label
+        this.fileWriter.write("(boolean"+lineCount+")");
+        this.fileWriter.newLine();
+        accessSecondLastInStack();
+        this.fileWriter.write("M=-1");//vomit a true; the eat-vomit cycle - Mishaal Kandapath
+        this.fileWriter.newLine();
+        //write the skip part
+        this.fileWriter.write("(skipTrue"+lineCount+")");
+        this.fileWriter.newLine();
+        decrementStack();
     }
 
 
